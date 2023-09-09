@@ -1,0 +1,52 @@
+VulScan
+
+
+#!/usr/bin/env python3
+
+import os
+import socket
+import sys
+
+def ret_banner(ip, port):
+    try:
+        with socket.socket() as sock:
+            sock.settimeout(2)
+            sock.connect((ip, port))
+            banner = sock.recv(1024)
+            return banner
+    except Exception as e:
+        return None
+
+def check_vulns(banner, file):
+    with open(file, "r") as f:
+        for line in f:
+            if line.strip() in banner.decode():
+                print('[+] Server is vulnerable: ' + banner.decode())
+
+def main():
+    if len(sys.argv) != 2:
+        print("[-] Usage: " + str(sys.argv[0]) + " <vuln_filename>")
+        sys.exit(1)
+
+    filename = sys.argv[1]
+
+    if not os.path.isfile(filename):
+        print('[-] File does not exist')
+        sys.exit(1)
+
+    if not os.access(filename, os.R_OK):
+        print('[-] Access denied to the file')
+        sys.exit(1)
+
+    portlist = [21, 22, 25, 80, 110, 135, 139, 445, 443]
+    ip = "192.168.29.196"
+
+    for port in portlist:
+        banner = ret_banner(ip, port)
+
+        if banner:
+            print("[+] " + ip + "/" + str(port) + " : " + banner.decode())
+            check_vulns(banner, filename)
+
+if _name_ == "_main_":
+    main()
